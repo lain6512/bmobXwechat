@@ -1,54 +1,72 @@
 //index.js
+var Init = require('../../utils/initUserInfo.js');
 //获取应用实例
 const app = getApp()
+var Tool = require('../../utils/tool.js');
+var Bmob = require('../../utils/bmob.js');
 
 Page({
   data: {
+    initFinish:false,//初始化状态
+    finishDelay:false,//延迟项数据状态
     motto: 'Hello World',
     userInfo: {},
     hasUserInfo: false,
-    canIUse: wx.canIUse('button.open-type.getUserInfo')
-  },
-  //事件处理函数
-  bindViewTap: function() {
-    wx.navigateTo({
-      url: '../logs/logs'
-    })
+    canIUse: wx.canIUse('button.open-type.getUserInfo'),
+
+
   },
   onLoad: function () {
-    if (app.globalData.userInfo) {
-      this.setData({
-        userInfo: app.globalData.userInfo,
-        hasUserInfo: true
-      })
-    } else if (this.data.canIUse){
-      // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回
-      // 所以此处加入 callback 以防止这种情况
-      app.userInfoReadyCallback = res => {
-        this.setData({
-          userInfo: res.userInfo,
-          hasUserInfo: true
-        })
-      }
-    } else {
-      // 在没有 open-type=getUserInfo 版本的兼容处理
-      wx.getUserInfo({
-        success: res => {
-          app.globalData.userInfo = res.userInfo
-          this.setData({
-            userInfo: res.userInfo,
-            hasUserInfo: true
-          })
-        }
-      })
-    }
-  },
-  getUserInfo: function(e) {
-    console.log(e)
-    app.globalData.userInfo = e.detail.userInfo
-    this.setData({
-      userInfo: e.detail.userInfo,
-      hasUserInfo: true
+    let that = this
+    Init.user(app,that,state=> {
+      console.log('app.User:')
+      console.log(app.User)
+      that.getData()
     })
-  }
+
+
+
+  },
+  onReady:function () {
+  },
+
+  //获取延迟项数据
+  getData () {
+    console.log('getData()')
+    return
+    var that = this
+    var type = 0,
+        objectId = app.User.objectId
+    var Record = Bmob.Object.extend("delay_list");
+    var query = new Bmob.Query(Record);
+
+    query.equalTo("finish", 0);
+    query.equalTo("objectId", objectId);
+    query.equalTo("type", type);
+    query.limit(30);
+    query.descending('updatedAt');
+    query.find({
+      success: function(res) {
+        console.log("查找成功")
+        console.log(res)
+
+        that.setData({
+          delayItemArr: res,
+          finishDelay: true
+        })
+
+      },
+      error: function(res, error) {
+        console.log("查找失败")
+        console.log(error)
+
+      }
+    });
+  },
+
+  showUserInfo () {
+
+  },
+
+
 })
